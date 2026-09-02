@@ -1,0 +1,255 @@
+html, body, a {
+background-color:#000;
+color:#DDD;
+padding:0;
+margin:0;
+height:100%;
+max-height:100%;
+}
+html, body {
+overflow: hidden;
+}
+.gold-border {
+	margin:10px;
+	border:1px #ffd341 solid;
+}
+
+/* Default: panels in a row (1–3 columns) */
+#wrapper {
+	display: flex;
+	flex-wrap: nowrap;   /* all in one row */
+	/* gap: 0.5rem;          optional spacing between panels */
+	height:98%;
+}
+.biblePanel {
+	flex: 1 1 0;          /* let each panel share the width */
+	min-width: 0;         /* prevents overflow weirdness */
+	padding:10px;
+	height:96%;
+}
+
+/* When there are 4+ panels, we switch to a 2x2 grid */
+#wrapper.grid-2x2 {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	grid-auto-rows: minmax(0, 1fr);
+}
+#wrapper.grid-2x2 .biblePanel {
+	/* grid children don’t need flex */
+	flex: none;
+}
+#wrapper.grid-2x2 .biblePanelWindow {
+	/* grid children don’t need flex */
+	height: 92%;
+}
+
+/* At 5+ panels the grid grows to 3 rows; let the verse window fill the
+   leftover space below the controls instead of overflowing the panel. */
+#wrapper.grid-5plus .biblePanel {
+	display: flex;
+	flex-direction: column;
+}
+#wrapper.grid-5plus .biblePanelWindow {
+	flex: 1 1 auto;
+	height: auto;
+	min-height: 0;
+}
+
+
+
+
+
+.bibleTopWrapper {
+	display: flex;
+	flex-wrap: nowrap;
+}
+.bibleClose {
+	width:50px;
+}
+.bibleCloseButton {
+	font: bold 20px verdana, arial;
+	color: #777;
+}
+.bibleControls {
+	text-align:center;
+	flex: 1;
+}
+.panelMenu {
+	width: 50px;
+	position: relative;
+}
+.panelMenuButton {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 4px;
+	width: 20px;
+	height: 20px;
+	margin-left: auto;
+	cursor: pointer;
+	user-select: none;
+}
+.panelMenuButton span {
+	display: block;
+	height: 2px;
+	background: #777;
+}
+.panelMenuDropdown {
+	display: none;
+	position: absolute;
+	top: 100%;
+	right: 0;
+	min-width: 130px;
+	margin-top: 4px;
+	background: #111;
+	border: 1px solid #555;
+	z-index: 20;
+}
+.panelMenu.open .panelMenuDropdown {
+	display: block;
+}
+.panelMenuItem {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+	padding: 8px 12px;
+	background: none;
+	border: none;
+	color: #DDD;
+	font: normal 12pt verdana, arial;
+	text-align: left;
+	cursor: pointer;
+}
+.panelMenuItem:hover:not(:disabled) {
+	background: #222;
+}
+.panelMenuItem:disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+.panelMenuDivider {
+	margin: 4px 8px;
+	border: none;
+	border-top: 1px solid #555;
+}
+.panelMenuIcon {
+	color: #777;
+	font: bold 16px verdana, arial;
+	width: 16px;
+	text-align: center;
+	flex-shrink: 0;
+}
+.bibleSelector {
+	width:18%;
+}
+.biblePanelWindow {
+	overflow:hidden;
+	overflow-y:auto;
+	max-height:93%;
+}
+
+.maintext {
+background-color:#DDD;
+}
+.maintext th {
+	background-color:#222;
+}
+.maintext td {
+	background-color:#000;
+}
+
+.ipadh {
+max-height:768px;
+}
+#addNewPanel {
+	background-color: #000;
+	border-radius: 50%;
+	border: 1px #000 solid;
+	position: absolute;
+	width: 50px;
+	height: 50px;
+	top: 0;
+	right: 0;
+	margin: 15px;
+	color: #FC0;
+	font: bold 36px verdana, arial;
+	text-align: center;
+	opacity: .6;
+}
+
+.biblePanel {
+	position: relative; /* so absolute children float inside */
+}
+
+/* shared style for left/right arrows */
+.panelNav {
+	position: absolute;
+	width: 40px;
+	height: 40px;
+	background-color: #000;
+	border: 1px solid #000;
+	color: #FC0;
+	border-radius: 50%;
+	font: bold 30px Verdana, Arial;
+	text-align: center;
+	line-height: 40px;
+	opacity: .6;
+	cursor: pointer;
+	user-select: none;
+	z-index: 10; /* stays above panel content */
+	transition: opacity .2s ease;
+}
+
+/* left arrow bottom-left */
+.panelLeft {
+	bottom: 10px;
+	left: 10px;
+}
+
+/* right arrow bottom-right */
+.panelRight {
+	bottom: 10px;
+	right: 10px;
+}
+
+
+.v {
+color: #CC0;
+font-weight: bold;
+vertical-align: super;
+font-size: 8pt;
+	position: relative;
+	display: inline-block;
+}
+/* Bigger invisible hit area */
+.v::before {
+	content: "";
+	position: absolute;
+	top: -0.4em;
+	left: -0.4em;
+	right: -0.4em;
+	bottom: -0.4em;
+	/* background-color: rgba(255,0,0,0.8);  for debugging */
+}
+p {
+	line-height:12pt;
+	font: normal 12pt verdana,arial;
+}
+.verse-span {
+line-height:21pt;
+cursor:pointer;
+}
+.verse-active {
+	text-decoration: underline;
+	background-color:#494b28;
+}
+
+.displayNone {
+display:none;
+}
+select {
+	padding: 5px;
+	background-color:#000;
+	color: #EEE;
+}
