@@ -143,6 +143,9 @@ overflow: hidden;
 .bibleSelector {
 	width:18%;
 }
+.bookSelector {
+	max-width: 125px;
+}
 .biblePanelWindow {
 	overflow:hidden;
 	overflow-y:auto;
