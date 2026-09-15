@@ -290,6 +290,7 @@ async function loadVerses(panelId, verseId='') {
         rememberPanelLocation(panel);
         updatePanelMenuHistory(panel);
         saveState();
+        applySameBookScroll(panel);
     }
     catch (err) {
         console.error("Error loading books:", err);
@@ -334,7 +335,6 @@ on(document, 'change', '.bookSelector', async (e, el) => {
     const panel = closest(el, '.biblePanel');
     const panelId = panel.id;
     pushPanelHistory(panel);
-    panel.querySelector('.chapterSelector').value=1;
     await loadChapters(panelId);
     await loadVerses(panelId);
     saveState();
@@ -363,19 +363,23 @@ on(document, 'click', '.verse-span', async (e, el) => {
 on(document, 'click', '.panelLeft', async (e, el) => {
     const panel = closest(el, '.biblePanel');
     const panelId = panel.id;
+    const peers = matchingLinkedPanels(panel);
     pushPanelHistory(panel);
     const chapter = panel.querySelector('.chapterSelector');
     selectPrev(chapter);
     await loadVerses(panelId);
+    await leadLinkedPanels(panel, peers);
 })
 
 on(document, 'click', '.panelRight', async (e, el) => {
     const panel = closest(el, '.biblePanel');
     const panelId = panel.id;
+    const peers = matchingLinkedPanels(panel);
     pushPanelHistory(panel);
     const chapter = panel.querySelector('.chapterSelector');
     selectNext(chapter);
     await loadVerses(panelId);
+    await leadLinkedPanels(panel, peers);
 })
 
 on(document, 'click', '#addNewPanel', async (e, el) => {
@@ -686,6 +690,121 @@ function updateLayout() {
 
     wrapper.classList.toggle('grid-2x2', panels.length >= 4);
     wrapper.classList.toggle('grid-5plus', panels.length >= 5);
+}
+
+function biblePanels() {
+    return Array.from(document.querySelectorAll('#wrapper .biblePanel'))
+        .filter(panel => panel.querySelector('.bookSelector'));
+}
+
+function panelBookId(panel) {
+    return panel.querySelector('.bookSelector')?.value || '';
+}
+
+function panelChapterNumber(panel) {
+    const sel = panel.querySelector('.chapterSelector');
+    if (!sel || sel.selectedIndex < 0) return '';
+    return sel.options[sel.selectedIndex].text;
+}
+
+function matchingLinkedPanels(panel) {
+    const bookId = panelBookId(panel);
+    const chapterNumber = panelChapterNumber(panel);
+    if (!bookId || !chapterNumber) return [];
+    return biblePanels().filter(other =>
+        other !== panel
+        && panelBookId(other) === bookId
+        && panelChapterNumber(other) === chapterNumber
+    );
+}
+
+function getScrollPercent(el) {
+    if (!el) return 0;
+    const max = el.scrollHeight - el.clientHeight;
+    return max > 0 ? el.scrollTop / max : 0;
+}
+
+const ignoreScroll = new WeakSet();
+
+function setScrollPercent(el, pct) {
+    if (!el) return;
+    const max = el.scrollHeight - el.clientHeight;
+    ignoreScroll.add(el);
+    el.scrollTop = max > 0 ? pct * max : 0;
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => ignoreScroll.delete(el));
+    });
+}
+
+function syncSameBookScroll(sourcePanel) {
+    const sourceWin = sourcePanel.querySelector('.biblePanelWindow');
+    const others = matchingLinkedPanels(sourcePanel);
+    if (!sourceWin || !others.length) return;
+
+    const pct = getScrollPercent(sourceWin);
+    others.forEach(panel => {
+        setScrollPercent(panel.querySelector('.biblePanelWindow'), pct);
+    });
+}
+
+function applySameBookScroll(panel) {
+    const others = matchingLinkedPanels(panel);
+    if (!others.length) return;
+    const pct = getScrollPercent(others[0].querySelector('.biblePanelWindow'));
+    requestAnimationFrame(() => {
+        setScrollPercent(panel.querySelector('.biblePanelWindow'), pct);
+    });
+}
+
+document.addEventListener('scroll', (e) => {
+    const win = e.target;
+    if (!(win instanceof Element) || !win.classList.contains('biblePanelWindow')) return;
+    if (ignoreScroll.has(win)) return;
+    const panel = closest(win, '.biblePanel');
+    if (panel) syncSameBookScroll(panel);
+}, true);
+
+function chapterTarget(panel) {
+    const sel = panel.querySelector('.chapterSelector');
+    if (!sel || sel.selectedIndex < 0) return null;
+    return {
+        chapterId: sel.value,
+        chapterNumber: sel.options[sel.selectedIndex].text
+    };
+}
+
+function applyChapter(panel, target) {
+    if (!target) return false;
+    const sel = panel.querySelector('.chapterSelector');
+    if (!sel) return false;
+
+    const match = Array.from(sel.options).find(opt => opt.value === target.chapterId)
+        || Array.from(sel.options).find(opt => opt.text === String(target.chapterNumber));
+    if (!match || sel.value === match.value) return false;
+
+    sel.value = match.value;
+    return true;
+}
+
+let syncingBookGroup = false;
+
+async function leadLinkedPanels(sourcePanel, peers) {
+    if (syncingBookGroup || !sourcePanel) return;
+    const others = (peers || []).filter(panel => panel !== sourcePanel);
+    const target = chapterTarget(sourcePanel);
+    if (!target || !others.length) return;
+
+    syncingBookGroup = true;
+    try {
+        for (const other of others) {
+            pushPanelHistory(other);
+            if (applyChapter(other, target)) {
+                await loadVerses(other.id);
+            }
+        }
+    } finally {
+        syncingBookGroup = false;
+    }
 }
 
 function selectNext(select) {
